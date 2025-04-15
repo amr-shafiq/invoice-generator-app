@@ -10,10 +10,7 @@ class AddAgentPage extends StatefulWidget {
 class _AddAgentPageState extends State<AddAgentPage> {
   final TextEditingController manualEmailController = TextEditingController();
   final TextEditingController manualNameController = TextEditingController();
-  final List<String> allowedEmails = [
-    "darkside260700@gmail.com",
-    "manager@example.com"
-  ];
+  final List<String> allowedEmails = ["manager@example.com"];
   String _statusMessage = ''; // To show status messages
   Map<String, dynamic>? _profileData; // To hold profile data
   String? _currentUserEmail;
@@ -102,13 +99,6 @@ class _AddAgentPageState extends State<AddAgentPage> {
         .where('role', isEqualTo: 'unknown')
         .where('status', isEqualTo: 'pending')
         .get();
-
-    print("📢 Debug: Retrieved Docs Count: ${snapshot.docs.length}");
-
-    for (var doc in snapshot.docs) {
-      print("📌 Found: ${doc.data()}"); // Debugging each document
-    }
-
     setState(() {
       pendingUsers = snapshot.docs.map((doc) {
         return {
@@ -131,31 +121,25 @@ class _AddAgentPageState extends State<AddAgentPage> {
     if (!confirm) return;
 
     try {
-      // Use a default name since we can't fetch displayName directly without a sign-in process
       String displayName = name;
-
-      // Check if this user exists in Firestore
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('email', isEqualTo: email)
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        // Update if user already exists
         String docId = snapshot.docs.first.id;
         await FirebaseFirestore.instance.collection('users').doc(docId).update({
           'role': 'agent',
           'status': 'approved',
-          'name': displayName, // Store the default display name in Firestore
+          'name': displayName,
         });
       } else {
-        // Create a new user entry with displayName
         await FirebaseFirestore.instance.collection('users').add({
           'email': email,
           'role': 'agent',
           'status': 'approved',
-          'agent_name':
-              displayName, // Store the default display name in Firestore
+          'agent_name': displayName,
           'created_at': FieldValue.serverTimestamp(),
         });
       }
@@ -170,69 +154,53 @@ class _AddAgentPageState extends State<AddAgentPage> {
     }
   }
 
-  /// ✅ Approve user as an "Agent"
   Future<void> _approveUser(String email) async {
-    // Show confirmation dialog before approving
     bool confirm = await _showConfirmationDialog(
       title: "Approve Agent?",
       content: "Are you sure you want to approve $email as an agent?",
     );
 
-    if (!confirm) return; // Exit if user cancels
-
-    // 🔹 Find the document with the matching email
+    if (!confirm) return;
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('users')
         .where('email', isEqualTo: email)
         .get();
 
     if (snapshot.docs.isNotEmpty) {
-      String docId = snapshot.docs.first.id; // Get the correct Firestore doc ID
+      String docId = snapshot.docs.first.id;
 
       await FirebaseFirestore.instance.collection('users').doc(docId).update({
         'role': 'agent',
         'status': 'approved',
       });
 
-      // Show success dialog after approval
       _showSuccessDialog(
           "Agent Approved", "The agent $email has been approved successfully.");
-
-      // Refresh list after approval
       _fetchPendingUsers();
     } else {
       _showErrorDialog("Approval Failed", "No user found with email: $email");
     }
   }
 
-  /// ✅ Reject user and delete their data from Firestore
   Future<void> _rejectUser(String email) async {
-    // Show confirmation dialog before rejecting
     bool confirm = await _showConfirmationDialog(
       title: "Reject Agent?",
       content:
           "Are you sure you want to reject and delete $email from records?",
     );
 
-    if (!confirm) return; // Exit if user cancels
+    if (!confirm) return;
 
-    // 🔹 Find the document with the matching email
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('users')
         .where('email', isEqualTo: email)
         .get();
 
     if (snapshot.docs.isNotEmpty) {
-      String docId = snapshot.docs.first.id; // Get Firestore doc ID
-
-      // Delete the document from Firestore
+      String docId = snapshot.docs.first.id;
       await FirebaseFirestore.instance.collection('users').doc(docId).delete();
-
-      // Show success dialog after deletion
       _showSuccessDialog(
           "Agent Rejected", "The agent $email has been removed.");
-
-      // Refresh list after deletion
       _fetchPendingUsers();
     } else {
       _showErrorDialog("Rejection Failed", "No user found with email: $email");
@@ -261,18 +229,17 @@ class _AddAgentPageState extends State<AddAgentPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            /// 🔹 Firebase Pending Approvals
             ExpansionTile(
               leading: const Icon(Icons.cloud_download),
               title: const Text(
-                "🕓 Pending Approvals from Firebase",
+                "Pending Approvals from Firebase",
                 style: TextStyle(fontWeight: FontWeight.normal),
               ),
               children: [
                 pendingUsers.isEmpty
                     ? const Padding(
                         padding: EdgeInsets.all(12.0),
-                        child: Text("✅ No pending approvals."),
+                        child: Text("No pending approvals."),
                       )
                     : ListView.separated(
                         shrinkWrap: true,
@@ -308,17 +275,14 @@ class _AddAgentPageState extends State<AddAgentPage> {
                       ),
               ],
             ),
-
             const SizedBox(height: 20),
-
-            /// 🔹 Manual Agent Entry
             ExpansionTile(
               leading: const Icon(Icons.person_add_alt),
               title: const Text(
                 "Manually Add Agent",
                 style: TextStyle(fontWeight: FontWeight.normal),
               ),
-              initiallyExpanded: true, // keep this open by default
+              initiallyExpanded: true,
               children: [
                 Padding(
                   padding:
