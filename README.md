@@ -1,4 +1,4 @@
-# 🚀 **Invoice Generation App**
+# **Invoice Generation App**
 
 A simple yet powerful application for managing and generating invoices. The app is built using Flutter for cross-platform compatibility, integrated with Supabase for data storage, and Firebase for user authentication. This application is designed to simplify invoice management for your business.
 
@@ -124,7 +124,3 @@ If you want to contribute to this project, please follow these steps:
 5. Create a new pull request.
 
 ---
-
-## **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
