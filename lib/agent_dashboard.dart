@@ -20,7 +20,7 @@ final String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
 
 class AgentDashboard extends StatefulWidget {
   final Function(bool) onThemeChanged;
-  final bool isDarkMode; // Pass the theme change callback
+  final bool isDarkMode;
 
   const AgentDashboard({
     Key? key,
@@ -291,15 +291,15 @@ class _AgentDashboardState extends State<AgentDashboard>
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'unpaid':
-        return Colors.red; // 🔴 Urgent, needs action
+        return Colors.red; // Urgent, needs action
       case 'paid':
-        return Colors.green; // 🟢 Payment received
+        return Colors.green; // Payment received
       case 'confirmed':
-        return Colors.orange; // 🟠 Confirmed but not reviewed
+        return Colors.orange; // Confirmed but not reviewed
       case 'reviewed':
-        return Colors.blue; // 🔵 Reviewed by management
+        return Colors.blue; // Reviewed by management
       default:
-        return Colors.grey; // ❔ Unknown status
+        return Colors.grey; // Unknown status
     }
   }
 
@@ -322,7 +322,7 @@ class _AgentDashboardState extends State<AgentDashboard>
 
     if (accessToken == null) {
       print(
-          "❌ Error: Supabase accessToken is null. User might not be logged in.");
+          "Error: Supabase accessToken is null. User might not be logged in.");
       return [];
     }
 
@@ -343,11 +343,11 @@ class _AgentDashboardState extends State<AgentDashboard>
         final List<dynamic> jsonData = jsonDecode(response.body);
         return jsonData.cast<Map<String, dynamic>>();
       } else {
-        print("❌ Failed to fetch invoices: ${response.body}");
+        print("Failed to fetch invoices: ${response.body}");
         return [];
       }
     } catch (e) {
-      print("❌ Error fetching invoices: $e");
+      print("Error fetching invoices: $e");
       return [];
     }
   }
@@ -357,13 +357,10 @@ class _AgentDashboardState extends State<AgentDashboard>
     final agentName =
         user?.userMetadata?['name']?.trim() ?? ""; // Get logged-in agent's name
 
-    print("🟡 Debug: Logged-in Agent Name: '$agentName'");
-    print("🔵 Debug: Selected Category: '$category'");
-
     return supabase
         .from('invoices')
         .stream(primaryKey: ['id']).map((List<Map<String, dynamic>> data) {
-      print("📦 Raw Invoices from Supabase: $data");
+      print("Raw Invoices from Supabase: $data");
 
       final filteredInvoices = data.where((invoice) {
         final nameInDB = invoice['agent_name']?.trim() ?? "";
@@ -375,11 +372,11 @@ class _AgentDashboardState extends State<AgentDashboard>
             statusInDB == categoryLower;
 
         if (!nameMatches) {
-          print("⚠️ Name mismatch: '$nameInDB' != '$agentName'");
+          print("Name mismatch: '$nameInDB' != '$agentName'");
         }
         if (!categoryMatches) {
           print(
-              "⚠️ Status mismatch: Invoice status '$statusInDB' does not match category '$category'");
+              "Status mismatch: Invoice status '$statusInDB' does not match category '$category'");
         }
 
         return nameMatches && categoryMatches;

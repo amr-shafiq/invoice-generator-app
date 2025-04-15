@@ -11,8 +11,8 @@ class _AddAgentPageState extends State<AddAgentPage> {
   final TextEditingController manualEmailController = TextEditingController();
   final TextEditingController manualNameController = TextEditingController();
   final List<String> allowedEmails = ["manager@example.com"];
-  String _statusMessage = ''; // To show status messages
-  Map<String, dynamic>? _profileData; // To hold profile data
+  String _statusMessage = '';
+  Map<String, dynamic>? _profileData;
   String? _currentUserEmail;
   List<Map<String, String>> pendingUsers = [];
 
@@ -22,9 +22,8 @@ class _AddAgentPageState extends State<AddAgentPage> {
     _fetchCurrentUser();
   }
 
-  /// ✅ Fetch the current logged-in user
   void _fetchCurrentUser() {
-    User? user = FirebaseAuth.instance.currentUser; // 🔹 Fixed here
+    User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       setState(() {
         _currentUserEmail = user.email;
@@ -35,7 +34,6 @@ class _AddAgentPageState extends State<AddAgentPage> {
     }
   }
 
-  /// Show a confirmation dialog before approving an agent
   Future<bool> _showConfirmationDialog(
       {required String title, required String content}) async {
     return await showDialog<bool>(
@@ -45,20 +43,19 @@ class _AddAgentPageState extends State<AddAgentPage> {
             content: Text(content),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false), // Cancel
+                onPressed: () => Navigator.pop(context, false),
                 child: const Text("Cancel"),
               ),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context, true), // Confirm
+                onPressed: () => Navigator.pop(context, true),
                 child: const Text("Approve"),
               ),
             ],
           ),
         ) ??
-        false; // Default to false if dialog is dismissed
+        false;
   }
 
-  /// Show a success dialog after approval
   void _showSuccessDialog(String title, String content) {
     showDialog(
       context: context,
@@ -67,7 +64,7 @@ class _AddAgentPageState extends State<AddAgentPage> {
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Close
+            onPressed: () => Navigator.pop(context),
             child: const Text("OK"),
           ),
         ],
@@ -75,7 +72,6 @@ class _AddAgentPageState extends State<AddAgentPage> {
     );
   }
 
-  /// Show an error dialog if approval fails
   void _showErrorDialog(String title, String content) {
     showDialog(
       context: context,
@@ -84,7 +80,7 @@ class _AddAgentPageState extends State<AddAgentPage> {
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Close
+            onPressed: () => Navigator.pop(context),
             child: const Text("OK"),
           ),
         ],
@@ -92,7 +88,6 @@ class _AddAgentPageState extends State<AddAgentPage> {
     );
   }
 
-  /// ✅ Fetch unauthorized users (role: "unknown", status: "pending")
   Future<void> _fetchPendingUsers() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('users')
@@ -108,10 +103,9 @@ class _AddAgentPageState extends State<AddAgentPage> {
       }).toList();
     });
 
-    print("✅ Updated Pending Users: $pendingUsers");
+    print("Updated Pending Users: $pendingUsers");
   }
 
-  /// ✅ Manually Approve User
   Future<void> _manualApproveUser(String email, String name) async {
     bool confirm = await _showConfirmationDialog(
       title: "Manual Approval",
@@ -215,7 +209,7 @@ class _AddAgentPageState extends State<AddAgentPage> {
         appBar: AppBar(title: const Text("Add Agent")),
         body: const Center(
           child: Text(
-            "❌ Access Denied.\nOnly admins can approve agents.",
+            "Access Denied.\nOnly admins can approve agents.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),

@@ -59,12 +59,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
   void _onTextChanged() {
     if (_debounce?.isActive ?? false) {
-      _debounce?.cancel(); // Cancel the previous timer
+      _debounce?.cancel();
     }
-
-    // Start a new timer
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      _updatePDFPreview(); // Call the preview function after 500ms of inactivity
+      _updatePDFPreview();
     });
   }
 
@@ -73,14 +71,11 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       DateTime dateTime;
 
       if (dateValue is int) {
-        // Convert timestamp (milliseconds since epoch) to DateTime
         dateTime = DateTime.fromMillisecondsSinceEpoch(dateValue);
       } else if (dateValue is String) {
         if (dateValue.contains('T')) {
-          // Convert ISO 8601 string to DateTime
           dateTime = DateTime.parse(dateValue);
         } else if (dateValue.contains('/')) {
-          // Convert dd/MM/yyyy to yyyy-MM-dd
           List<String> parts = dateValue.split('/');
           if (parts.length == 3) {
             dateTime = DateTime.parse("${parts[2]}-${parts[1]}-${parts[0]}");
@@ -149,14 +144,13 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     for (var controller in controllers) {
       controller.addListener(() {
         if (mounted) {
-          _debouncedUpdatePDFPreview(); // 🔥 Updates preview in real time
+          _debouncedUpdatePDFPreview();
         }
       });
     }
   }
 
   void _clearFields() {
-    // Clear fields only when invoice number is cleared
     _fullNameController.clear();
     _hotelController.clear();
     _roomTypeController.clear();
@@ -180,7 +174,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     _fullNameController.text = invoiceDetails['customer_name'] ?? "";
     _hotelController.text = invoiceDetails['hotel'] ?? "";
     _roomTypeController.text = invoiceDetails['room_type'] ?? "";
-    // Only fill these fields if they haven't been manually cleared by the user
     if (!_hasUserEditedBreakfast && _breakfastController.text.isEmpty) {
       _breakfastController.text = invoiceDetails['breakfast'] ?? "No";
     }
@@ -257,7 +250,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
   @override
   void dispose() {
-    // ✅ Remove listeners and dispose controllers
     List<TextEditingController> controllers = [
       _fullNameController,
       _invoiceNoController,
@@ -299,7 +291,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     super.dispose();
   }
 
-  // Controllers for user inputs
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _invoiceNoController = TextEditingController();
   final TextEditingController _dateInvoiceController = TextEditingController();
@@ -327,14 +318,14 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
   final TextEditingController RoleController = TextEditingController();
   final TextEditingController surchargeController = TextEditingController();
 
-  File? _pdfFile; // Store the latest generated PDF
+  File? _pdfFile;
 
   Future<String?> fetchAgentNameFromFirestore(String? userEmail) async {
     if (userEmail == null) return null;
 
     var querySnapshot = await FirebaseFirestore.instance
         .collection("users")
-        .where("email", isEqualTo: userEmail) // Query by email instead
+        .where("email", isEqualTo: userEmail)
         .limit(1)
         .get();
 
@@ -366,7 +357,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     if (userEmail != null) {
       String? name = await fetchAgentNameFromFirestore(userEmail);
       setState(() {
-        agentName = name ?? "Unknown"; // Update the displayed name
+        agentName = name ?? "Unknown";
       });
     }
   }
@@ -378,22 +369,20 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     Map<String, String>? roleData = await _authService.checkUserRole(email);
     if (roleData != null) {
       setState(() {
-        userRole = roleData["role"]; // 🔹 Update state with user role
+        userRole = roleData["role"];
       });
     }
   }
 
   String formatNumber(double? value) {
-    if (value == null) return "0.00"; // Default to 0.00 if value is null
-    return value.toStringAsFixed(2); // Format to 2 decimal places
+    if (value == null) return "0.00";
+    return value.toStringAsFixed(2);
   }
 
   Future<void> fetchInvoiceDetails(String invoiceNumber) async {
     if (_isInvoiceNumberFetched) return;
 
     try {
-      // Step 1: Try to fetch agent invoice firs
-
       final agentInvoice = await supabase
           .from('invoices')
           .select()
@@ -406,13 +395,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           agentInvoice.isNotEmpty ? agentInvoice.first : null;
 
       if (agentInvoiceList != null) {
-        print("✅ Fetched Agent Invoice Details: $agentInvoice");
-
         _prefillInvoiceForm(agentInvoiceList);
         return;
       }
 
-      // Step 2: No agent invoice found, check if management one exists
       final managementInvoice = await supabase
           .from('invoices')
           .select()
@@ -425,7 +411,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           managementInvoice.isNotEmpty ? managementInvoice.first : null;
 
       if (managementInvoiceList != null) {
-        print("⚠️ Fetched Management Invoice instead: $managementInvoice");
+        print("Fetched Management Invoice instead: $managementInvoice");
 
         _showCustomDialog(
           context,
@@ -435,12 +421,11 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
               "You can continue editing this version if appropriate.",
         );
 
-        _prefillInvoiceForm(managementInvoiceList); // ✅ Reuse helper
+        _prefillInvoiceForm(managementInvoiceList);
         return;
       }
 
-      // Step 3: No invoice found at all
-      print("❌ No invoice found at all for $invoiceNumber");
+      print("No invoice found at all for $invoiceNumber");
       _showCustomDialog(
         context,
         title: "Invoice Not Found",
@@ -448,7 +433,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             "No invoice exists with this number. Please check for typos or use a valid invoice number.",
       );
     } catch (e) {
-      print("🚨 Error fetching invoice: $e");
+      print("Error fetching invoice: $e");
       _showErrorDialog(context);
     }
   }
@@ -551,7 +536,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
   Future<File> fillInvoiceTemplate(
       {required String customerName,
-      required String invoiceNo, // Now a string
+      required String invoiceNo,
       required DateTime dateInvoice,
       required String hotel,
       required String roomType,
@@ -581,11 +566,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     sf.PdfDocument document = sf.PdfDocument(inputBytes: bytes);
 
     final sf.PdfForm form = document.form;
-    // form.setDefaultAppearance(true);
 
     form.setDefaultAppearance(false);
-
-    // ✅ Format dates properly
     String formattedInvoiceDate = DateFormat('dd/MM/yyyy').format(dateInvoice);
     String formattedBankTransfer =
         DateFormat('dd/MM/yyyy').format(bankTransfer);
@@ -596,7 +578,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
     final Map<String, dynamic> fields = {
       "CUSTOMER_NAME": customerName,
-      "INVOICE_NO": invoiceNo, // Use the generated invoice number
+      "INVOICE_NO": invoiceNo,
       "DATE": formattedInvoiceDate,
       "BANK_TRANSFER": formattedBankTransfer,
       "HOTEL_NAME": hotel,
@@ -633,8 +615,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     document.dispose();
 
     final output = await getTemporaryDirectory();
-    _pdfFile = File(
-        "${output.path}/AMK$invoiceNo.pdf"); // 🔥 Use invoiceNo as filename
+    _pdfFile = File("${output.path}/AMK$invoiceNo.pdf");
     await _pdfFile!.writeAsBytes(updatedBytes);
 
     return _pdfFile!;
@@ -642,36 +623,31 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
   Future<Map<String, dynamic>?> fetchInvoiceByNumber(String invoiceNo) async {
     final invoiceNumber = invoiceNo.toUpperCase();
-
-    // Try to fetch agent invoice first
     final agentInvoiceResponse = await supabase
         .from('invoices')
         .select()
         .eq('invoice_no', invoiceNumber)
-        .eq('role', 'agent') // Filter by agent
+        .eq('role', 'agent')
         .limit(1)
         .maybeSingle();
 
     if (agentInvoiceResponse != null) {
       print("✅ Found Agent Invoice: $agentInvoiceResponse");
-      return agentInvoiceResponse; // Return the agent invoice if found
+      return agentInvoiceResponse;
     }
 
-    // If no agent invoice is found, try to fetch management invoice
     final managementInvoiceResponse = await supabase
         .from('invoices')
         .select()
         .eq('invoice_no', invoiceNumber)
-        .eq('role', 'management') // Filter by management
+        .eq('role', 'management')
         .limit(1)
         .maybeSingle();
 
     if (managementInvoiceResponse != null) {
       print("⚠️ Found Management Invoice: $managementInvoiceResponse");
-      return managementInvoiceResponse; // Return the management invoice if found
+      return managementInvoiceResponse;
     }
-
-    // If no invoice is found for the provided invoice number
     print("❌ No invoice found for invoice number: $invoiceNumber");
     return null;
   }
@@ -683,38 +659,28 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
   }
 
   Future<String> generateUniqueInvoiceNumber() async {
-    // Fetch only invoices belonging to the current agent
     final response = await supabase.from('invoices').select('invoice_no');
-    // .eq('agent_name', agentName); // ✅ Filter by agent_name
 
     if (response.isEmpty) {
-      return "00001"; // ✅ Start fresh if no invoice exists for this agent
+      return "00001";
     }
-
-    // Extract only valid "ZZZZZ" format invoices
     List<String> validInvoices = response
         .map<String>((row) => row['invoice_no'] as String)
-        .where((no) => _isFiveCharFormat(no)) // ✅ Only accept 5-char format
+        .where((no) => _isFiveCharFormat(no))
         .toList();
-
-    // ✅ If no valid invoice is found, start at "00001"
     if (validInvoices.isEmpty) {
       return "00001";
     }
-
-    // Sort invoices in descending order and pick the latest one
     validInvoices.sort((a, b) => b.compareTo(a));
     String latestInvoice = validInvoices.first;
 
     return _incrementFiveCharInvoice(latestInvoice);
   }
 
-// 🔹 Function to check if an invoice follows the "ZZZZZ" pattern
   bool _isFiveCharFormat(String invoiceNo) {
     return RegExp(r'^[\dA-Z]{5}$').hasMatch(invoiceNo);
   }
 
-// 🔹 Increment "ZZZZZ" format invoice number (Digits + Letters)
   String _incrementFiveCharInvoice(String currentNo) {
     List<int> charCodes = List<int>.from(currentNo.codeUnits);
 
@@ -729,7 +695,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
         // 'Z' → '0' (rollover)
         charCodes[i] = 48;
       } else {
-        charCodes[i] = charCode + 1; // Normal increment
+        charCodes[i] = charCode + 1;
         return String.fromCharCodes(charCodes);
       }
     }
@@ -742,58 +708,52 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
     try {
       if (dateString.contains('/')) {
-        // Handle dd/MM/yyyy format
         List<String> parts = dateString.split('/');
         if (parts.length == 3) {
           return DateTime.parse("${parts[2]}-${parts[1]}-${parts[0]}");
         }
       } else if (dateString.contains('-')) {
-        // Handle YYYY-MM-DD or full timestamp format
         return DateTime.parse(dateString);
       }
     } catch (e) {
       print("Error parsing date to DateTime: $e");
     }
 
-    return DateTime.now(); // Default to now if parsing fails
+    return DateTime.now();
   }
 
   String? formatDate(String dateString) {
-    if (dateString.trim().isEmpty) return null; // ✅ Return null if empty
+    if (dateString.trim().isEmpty) return null;
     try {
-      DateFormat inputFormat = DateFormat("dd/MM/yyyy"); // ✅ Your format
-      DateFormat outputFormat = DateFormat("yyyy-MM-dd"); // ✅ PostgreSQL format
+      DateFormat inputFormat = DateFormat("dd/MM/yyyy"); // Selected format
+      DateFormat outputFormat = DateFormat("yyyy-MM-dd"); // PostgreSQL format
       DateTime parsedDate = inputFormat.parse(dateString);
-      return outputFormat.format(parsedDate); // ✅ Convert to "YYYY-MM-DD"
+      return outputFormat.format(parsedDate);
     } catch (e) {
       print("Error parsing date: $e");
-      return null; // ✅ Return null if parsing fails
+      return null;
     }
   }
 
   String _formatDateForUpload(String dateString) {
     try {
-      // Parse the date string (assuming it's in dd/MM/yyyy format)
       DateTime dateTime = DateFormat('dd/MM/yyyy').parse(dateString);
-      // Format the date as ISO 8601 for upload
       return dateTime.toIso8601String();
     } catch (e) {
       print("Error parsing date for upload: $e");
-      return ""; // Return an empty string if parsing fails
+      return "";
     }
   }
 
   Future<void> _downloadPDF() async {
     String invoiceNumber = await generateUniqueInvoiceNumber();
     if (_pdfFile == null || !await _pdfFile!.exists()) {
-      print("❌ Error: _pdfFile is null or does not exist!");
+      print("Error: _pdfFile is null or does not exist!");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No PDF available to download!")),
       );
       return;
     }
-
-    // ✅ Request permissions for Android 10+ (Scoped Storage)
     if (Platform.isAndroid) {
       final PermissionStatus status = await Permission.storage.request();
 
@@ -825,7 +785,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     }
 
     try {
-      // ✅ Explicitly read bytes from _pdfFile
       Uint8List bytes = await _pdfFile!.readAsBytes();
 
       File savedFile = File(outputPath);
@@ -841,9 +800,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             ),
           ),
           backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.red.shade900 // Darker red for dark mode
-              : const Color.fromARGB(
-                  255, 212, 205, 205), // Lighter red for light mode
+              ? Colors.red.shade900
+              : const Color.fromARGB(255, 212, 205, 205),
           leading: Icon(
             Icons.error,
             color: Theme.of(context).brightness == Brightness.dark
@@ -876,20 +834,16 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
   Future<String> getAgentNameFromFirestore(String userEmail) async {
     try {
-      // Reference to the "users" collection
       CollectionReference usersRef =
           FirebaseFirestore.instance.collection('users');
-
-      // Query Firestore where the email matches the logged-in user's email
       QuerySnapshot querySnapshot =
           await usersRef.where('email', isEqualTo: userEmail).get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        // Get the first matching document and extract `agent_name`
         var userData = querySnapshot.docs.first.data() as Map<String, dynamic>;
         return userData['agent_name'] ?? "Unknown Agent";
       } else {
-        return "Unknown Agent"; // No matching user found
+        return "Unknown Agent";
       }
     } catch (e) {
       print("Error fetching agent name: $e");
@@ -898,7 +852,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
   }
 
   bool isConfirmedInvoice(String invoiceNumber) {
-    // Ensure it's not an invoice currently being created
     return invoiceNumber.startsWith("INV") ||
         int.tryParse(invoiceNumber) == null;
   }
@@ -920,11 +873,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
     for (var controller in requiredControllers) {
       if (controller.text.trim().isEmpty) {
-        return false; // If any required field is empty, return false
+        return false;
       }
     }
-
-    return true; // All fields are filled
+    return true;
   }
 
   void _showStatusDialog(BuildContext context) {
@@ -957,12 +909,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     final agentEmail = user.email ?? "N/A";
     final agentName = user?.userMetadata?['full_name'] ?? "N/A";
     String invoiceNumber = _invoiceNoController.text.trim();
-
-    // Debugging logs to check if staffName is set correctly
-    print("Logged-in User: ${user?.email}");
-    print("Staff Name: $agentName");
-
-    // Assign values if the text controllers are empty
     if (_agentController.text.isEmpty) {
       _agentController.text = agentName;
     }
@@ -976,15 +922,12 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       if (oldInvoiceNumber.isNotEmpty) {
         invoiceNumber = oldInvoiceNumber;
         _invoiceNoController.text = oldInvoiceNumber;
-        print("📌 Reusing old invoice number: $invoiceNumber");
       } else {
         invoiceNumber = await generateUniqueInvoiceNumber();
-        print("📌 New invoice number generated: $invoiceNumber");
       }
     }
 
     String? userEmail = supabase.auth.currentUser?.email;
-    print("Using Agent Name in Database: $userEmail"); // Debugging
     if (userEmail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("User not logged in")),
@@ -1006,24 +949,17 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             .eq('invoice_no', oldInvoiceNumber)
             .single();
 
-        isNewInvoice = false; // ✅ Found in Supabase, so it's not a new one
-
-        // Ensure agent name and email are correctly set
+        isNewInvoice = false;
         oldInvoiceDetails['agent_name'] ??= agentName;
         oldInvoiceDetails['agent_email'] ??= agentEmail;
-
-        print(
-            "Fetched existing invoice: ${oldInvoiceDetails['agent_name']} - ${oldInvoiceDetails['agent_email']}");
       } catch (e) {
-        isNewInvoice = true; // ✅ Invoice not found, treat as new
+        isNewInvoice = true;
         print(
             "Invoice number '$oldInvoiceNumber' not found in Supabase. Assigning default values.");
       }
     } else {
-      isNewInvoice = true; // ✅ No invoice number entered, treat as new
+      isNewInvoice = true;
     }
-
-// 🔹 If it's a new invoice, use default values
     if (isNewInvoice) {
       oldInvoiceDetails = {
         'customer_name': "N/A",
@@ -1052,26 +988,19 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       };
     }
 
-    print(
-        "Invoice Status: ${isNewInvoice ? 'New (Preview)' : 'Existing (Fetched)'}");
-
-    print("ℹ️ oldInvoiceNumber: $oldInvoiceNumber");
-    print("ℹ️ isNewInvoice: $isNewInvoice");
-
-// 🧹 Auto-delete old agent invoice PDF if it exists and is incomplete
+// Auto-delete old agent invoice PDF if it exists and is incomplete
     if (oldInvoiceNumber.isNotEmpty) {
       try {
         final previousAgentUpload = await supabase
             .from('invoices')
             .select()
             .eq('invoice_no', oldInvoiceNumber)
-            .eq('role', 'agent') // Only check agent uploads
+            .eq('role', 'agent')
             .maybeSingle();
 
         if (previousAgentUpload != null) {
           final String? oldPdfUrl = previousAgentUpload['pdf_url'];
-          final String? oldBookingNo = previousAgentUpload[
-              'booking_number']; // Check if booking is empty
+          final String? oldBookingNo = previousAgentUpload['booking_number'];
           final bool isIncomplete =
               oldBookingNo == null || oldBookingNo.isEmpty;
 
@@ -1080,33 +1009,30 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
               isIncomplete) {
             final String filePath = oldPdfUrl.split('/invoices/').last;
 
-            // 🧹 Remove the old PDF from Supabase storage
+            // Remove the old PDF from Supabase storage
             await supabase.storage.from('invoices').remove([filePath]);
 
-            // 🧹 Delete the old invoice record from Supabase
+            // Delete the old invoice record from Supabase
             await supabase
                 .from('invoices')
                 .delete()
                 .eq('invoice_no', oldInvoiceNumber)
                 .eq('role', 'agent');
-
-            print("🧹 Deleted incomplete agent invoice: $filePath");
           } else {
             print(
-                "✅ Skipped deletion: Agent invoice is valid or already revised.");
+                "Skipped deletion: Agent invoice is valid or already revised.");
           }
         } else {
-          print("ℹ️ No previous agent invoice found for deletion.");
+          print("No previous agent invoice found for deletion.");
         }
       } catch (e) {
-        print("⚠️ Failed to auto-delete previous agent invoice: $e");
+        print("Failed to auto-delete previous agent invoice: $e");
       }
     } else {
       print(
-          "ℹ️ Conditions for auto-delete not met (either oldInvoiceNumber is empty or isNewInvoice is true).");
+          "Conditions for auto-delete not met (either oldInvoiceNumber is empty or isNewInvoice is true).");
     }
 
-// Ensure oldInvoiceDetails has default values
     oldInvoiceDetails = oldInvoiceDetails.isNotEmpty
         ? oldInvoiceDetails
         : {
@@ -1134,8 +1060,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             'agent_email': "N/A",
             'role': userRole == "management" ? "management" : "Unknown",
           };
-
-    // Parse dates from old invoice details or use current values from controllers
     DateTime dateInvoice = _dateInvoiceController.text.isNotEmpty
         ? parseDate(_formatDateForDisplay(_dateInvoiceController.text))
         : DateTime.parse(oldInvoiceDetails['date_invoice'] ??
@@ -1157,21 +1081,15 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
         : DateTime.parse(
             oldInvoiceDetails['dateline'] ?? DateTime.now().toIso8601String());
 
-    // Determine the agent/staff name
     String agentName1 =
         (oldInvoiceNumber.isNotEmpty && oldInvoiceDetails.isNotEmpty)
-            ? oldInvoiceDetails['agent_name'] ??
-                "N/A" // Fetch agent name from existing invoice
-            : (userRole == "management"
-                ? agentName
-                : "N/A"); // Assign management staff name for new invoices
-
-    // Generate the PDF with the old invoice number and updated details
+            ? oldInvoiceDetails['agent_name'] ?? "N/A"
+            : (userRole == "management" ? agentName : "N/A");
     File originalPdfFile = await fillInvoiceTemplate(
       customerName: _fullNameController.text.isNotEmpty
           ? _fullNameController.text
           : oldInvoiceDetails['customer_name'] ?? "N/A",
-      invoiceNo: oldInvoiceNumber, // Reuse the old invoice number
+      invoiceNo: oldInvoiceNumber,
       dateInvoice: dateInvoice,
       hotel: _hotelController.text.isNotEmpty
           ? _hotelController.text
@@ -1184,7 +1102,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       bankTransfer: bankTransfer,
       roomRate: formatNumber(double.tryParse(roomRateController.text.isNotEmpty
           ? roomRateController.text
-          : oldInvoiceDetails['room_rate'].toString())), // Format as string
+          : oldInvoiceDetails['room_rate'].toString())),
       breakfast: _breakfastController.text.isNotEmpty
           ? _breakfastController.text
           : oldInvoiceDetails['breakfast'] ?? "No",
@@ -1192,10 +1110,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
               ? _quantityRoomController.text
               : oldInvoiceDetails['quantity_room'].toString()) ??
           0,
-      balanceDue: formatNumber(double.tryParse(balanceDueController
-              .text.isNotEmpty
-          ? balanceDueController.text
-          : oldInvoiceDetails['balance_due'].toString())), // Format as string
+      balanceDue: formatNumber(double.tryParse(
+          balanceDueController.text.isNotEmpty
+              ? balanceDueController.text
+              : oldInvoiceDetails['balance_due'].toString())),
       surcharge: surchargeController.text.isNotEmpty
           ? int.tryParse(surchargeController.text)
           : (oldInvoiceDetails['surcharge'] != null
@@ -1203,24 +1121,23 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
               : 0),
       amount: formatNumber(double.tryParse(amountController.text.isNotEmpty
           ? amountController.text
-          : oldInvoiceDetails['amount'].toString())), // Format as string
-      totalAmount: formatNumber(double.tryParse(totalAmountController
-              .text.isNotEmpty
-          ? totalAmountController.text
-          : oldInvoiceDetails['total_amount'].toString())), // Format as string
+          : oldInvoiceDetails['amount'].toString())),
+      totalAmount: formatNumber(double.tryParse(
+          totalAmountController.text.isNotEmpty
+              ? totalAmountController.text
+              : oldInvoiceDetails['total_amount'].toString())),
       payment: formatNumber(double.tryParse(paymentController.text.isNotEmpty
           ? paymentController.text
-          : oldInvoiceDetails['payment'].toString())), // Format as string
+          : oldInvoiceDetails['payment'].toString())),
       balance: formatNumber(double.tryParse(balanceController.text.isNotEmpty
           ? balanceController.text
-          : oldInvoiceDetails['balance'].toString())), // Format as string
+          : oldInvoiceDetails['balance'].toString())),
       agentName1: agentName1,
       bookingNo: bookingNoController.text.isNotEmpty
           ? int.tryParse(bookingNoController.text)
           : (oldInvoiceDetails['booking_no'] != null
               ? int.tryParse(oldInvoiceDetails['booking_no'].toString())
               : 0),
-
       dateline: dateline,
       addOn: _AddOnController.text.isNotEmpty
           ? _AddOnController.text
@@ -1229,9 +1146,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           ? _RemarkController.text
           : (_RemarkController.text.isEmpty &&
                   oldInvoiceDetails['remarks'] != null)
-              ? "" // Leave it empty if user deletes it
+              ? ""
               : oldInvoiceDetails['remarks'] ?? "N/A",
-
       status: statusController.text.isNotEmpty
           ? statusController.text
           : oldInvoiceDetails['status'] ?? "N/A",
@@ -1246,14 +1162,13 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     );
 
     if (!_validateFields()) {
-      // ❌ Show an error message if fields are missing
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Please fill in all required fields before uploading."),
           backgroundColor: Colors.red,
         ),
       );
-      return; // Stop the function
+      return;
     }
 
     final double roomRate = double.tryParse(roomRateController.text) ??
@@ -1265,13 +1180,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     final double payment = double.tryParse(paymentController.text) ??
         (oldInvoiceDetails['payment'] ?? 0.0);
 
-// Step 1: Calculate amount, total_amount, balance_due, and balance
     final double amount = roomRate * quantityRoom;
     final double totalAmount = amount + surcharge;
     final double balanceDue = payment - totalAmount;
     final double balance = balanceDue;
-
-// Step 2: Check if uploaded by management
     final bool isManagementUpload = userRole == "management";
 
     String determineStatus() {
@@ -1282,7 +1194,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       } else {
         if (payment == 0 || balanceDue < 0) return "Confirmed";
         if (balanceDue >= 0) return "Reviewed";
-        return "Confirmed"; // fallback
+        return "Confirmed";
       }
     }
 
@@ -1291,20 +1203,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final fileName = "INV${invoiceNumber}_management_$timestamp.pdf";
 
-    print("🔹 Logged-in User Email: $agentEmail");
-    print("🔹 Logged-in User Name: $agentName");
-    print(
-        "🔹 Fetched Invoice Agent: ${oldInvoiceDetails['agent_name'] ?? 'N/A'}");
-    print("🔹 Final Used Agent Name: ${_agentController.text}");
-
     try {
-      // Upload the updated PDF to Supabase storage
       await supabase.storage.from('invoices').upload(fileName, originalPdfFile);
-
       final filePublicUrl =
           supabase.storage.from('invoices').getPublicUrl(fileName);
-
-      // Insert or update the invoice record in the database
       await supabase.from('invoices').upsert({
         'pdf_url': filePublicUrl,
         'agent_name': _agentController.text,
@@ -1389,10 +1291,10 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             ),
           ),
           backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.blueGrey // Darker red for dark mode
-              : Colors.lightBlue[50], // Lighter red for light mode
+              ? Colors.blueGrey
+              : Colors.lightBlue[50],
           leading: Icon(
-            Icons.check_circle, // Use success icon instead of error
+            Icons.check_circle,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white
                 : Colors.green,
@@ -1413,8 +1315,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           ],
         ),
       );
-
-      // Auto-dismiss after 3 seconds
       Future.delayed(Duration(seconds: 3), () {
         ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
       });
@@ -1430,8 +1330,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     bool isManagement = userRole == "management";
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     String staffName = user?.displayName ?? "Unknown Staff";
-
-    // Skip if the PDF is already being generated
     if (_isLoading.value) return;
 
     _isLoading.value = true;
@@ -1442,23 +1340,18 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       previousInvoice = await fetchInvoiceByNumber(invoiceNumber);
 
       if (previousInvoice == null) {
-        print("❌ Invoice number not found. Please check the number.");
         setState(() => _isLoading.value = false);
         // success = false;
         return;
       }
     } else if (isManagement && invoiceNumber.isEmpty) {
       invoiceNumber = await generateUniqueInvoiceNumber();
-      print("📌 New invoice number generated: $invoiceNumber");
     } else {
-      print("Invoice number is required!");
       setState(() => _isLoading.value = false);
       return;
     }
 
     if (previousInvoice != null) {
-      print("📄 Found previous invoice, pre-filling data...");
-
       if (_fullNameController.text.isEmpty) {
         _fullNameController.text = previousInvoice['customer_name'] ?? '';
       }
@@ -1494,12 +1387,9 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       if (DatelineController.text.isEmpty) {
         DatelineController.text = _formatDate(previousInvoice['dateline']);
       }
-
-      // Keep numeric fields editable
       if (_quantityRoomController.text.isEmpty) {
         _quantityRoomController.clear();
       }
-
       if (roomRateController.text.isEmpty) {
         roomRateController.clear();
       }
@@ -1525,7 +1415,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
         surchargeController.clear();
       }
     } else {
-      print("❌ No previous invoice found. Using empty fields.");
+      print("No previous invoice found. Using empty fields.");
     }
 
     double roomRate = double.tryParse(roomRateController.text) ?? 0.0;
@@ -1535,9 +1425,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     double amount = roomRate * quantityRoom;
     double totalAmount = amount + surcharge;
     double balanceDue = payment - totalAmount;
-    print("Amount: $amount");
-    print("Total Amount: $totalAmount");
-    print("Balance Due: $balanceDue");
+
     amountController.text = amount.toStringAsFixed(2);
     totalAmountController.text = totalAmount.toStringAsFixed(2);
     balanceDueController.text = balanceDue.toStringAsFixed(2);
@@ -1589,12 +1477,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       agentEmail: agentEmailController.text,
       role: RoleController.text,
     );
-
-    print("✅ PDF generated: ${file.path}");
-    print("✅ File exists? ${await file.exists()}");
-
-    // if (!mounted) return;
-
     setState(() {
       _pdfFile = file;
       _isLoading.value = false;
@@ -1605,7 +1487,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     try {
       return DateFormat('dd/MM/yyyy').parse(date);
     } catch (e) {
-      return DateTime.now(); // Default fallback
+      return DateTime.now();
     }
   }
 
@@ -1684,7 +1566,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
                   isNumeric: true),
             ],
 
-            // ✅ Agent Details Section
+            // Agent Details Section
             _buildSectionHeader("Agent Details"),
             _buildTextField(_agentController, "Agent Name",
                 "Enter agent's full name", Icons.person),
@@ -1698,7 +1580,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
                 Icons.format_list_bulleted_add),
 
             if (userRole == 'management') ...[
-              // ✅ Condition now works
               _buildTextField(bookingNoController, "Booking No",
                   "Enter Booking Number", Icons.account_balance_wallet,
                   isNumeric: true),
@@ -1731,17 +1612,13 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
 
           if (invoiceNumber.isEmpty) {
             if (isManagement) {
-              // Management generates a new invoice number if empty
               isGeneratingInvoiceNumber = true;
               final newInvoiceNumber = await generateUniqueInvoiceNumber();
-              print("📌 New invoice number generated: $newInvoiceNumber");
             } else {
               _showStatusDialog(context);
               return;
             }
           }
-
-          // Only fetch details if the invoice number exists in Supabase
           if (invoiceNumber.isNotEmpty && !isGeneratingInvoiceNumber) {
             await fetchInvoiceDetails(invoiceNumber);
           }
@@ -1783,14 +1660,12 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
   }
 
   Widget _buildAgentNameDisplay() {
-    print(
-        "Building Agent Name Display: $agentName"); // ✅ Check if it's updating
+    print("Building Agent Name Display: $agentName");
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Text("Agent Name:", style: TextStyle(fontWeight: FontWeight.bold)),
           Text(
             agentName ?? "Loading...",
             style: TextStyle(color: Colors.black87),
@@ -1800,7 +1675,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     );
   }
 
-  // 🔹 Builds TextFields with Icons
   Widget _buildTextField(
     TextEditingController controller,
     String label,
@@ -1830,7 +1704,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           switch (label) {
             case "Remarks":
               _hasUserEditedRemarks = true;
-              print("_hasUserEditedRemarks: $_hasUserEditedRemarks");
               break;
             case "Add-On":
               _hasUserEditedAddOn = true;
@@ -1890,8 +1763,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     if (!options.contains(dropdownValue)) {
       dropdownValue = options.first;
     }
-
-    print("Dropdown value for $label: $dropdownValue");
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
@@ -1912,7 +1783,6 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     );
   }
 
-  // 🔹 Builds Section Headers
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

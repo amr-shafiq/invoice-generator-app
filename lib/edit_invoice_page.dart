@@ -97,19 +97,14 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
               .from('invoices')
               .remove([pdfUrl.split('/').last]);
         }
-
-        // Upload new PDF
         final uploadedFilePath =
             await supabase.storage.from('invoices').upload(fileName, file);
 
         if (uploadedFilePath == null) {
           print("Upload failed: No file path returned");
         } else {
-          // Get public URL of new file
           final filePublicUrl =
               supabase.storage.from('invoices').getPublicUrl(fileName);
-
-          // Update state and database
           setState(() {
             pdfUrl = filePublicUrl;
           });
@@ -150,8 +145,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
         MaterialPageRoute(
           builder: (context) => ViewInvoicePage(
             pdfUrl: pdfUrl,
-            invoiceNumber:
-                invoice['invoice_no'] ?? 'Unknown', // ✅ Now this works!
+            invoiceNumber: invoice['invoice_no'] ?? 'Unknown',
           ),
         ),
       );
@@ -187,8 +181,7 @@ class _EditInvoicePageState extends State<EditInvoicePage> {
                           IconButton(
                             icon: const Icon(Icons.visibility,
                                 color: Colors.blue),
-                            onPressed: () =>
-                                _viewPdf(pdfUrl ?? ''), // ✅ Pass invoice
+                            onPressed: () => _viewPdf(pdfUrl ?? ''),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),

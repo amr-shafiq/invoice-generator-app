@@ -116,7 +116,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
           .update({'status': newStatus}).match({'id': int.parse(invoiceId)});
       setState(() {});
     } catch (e) {
-      print("❌ Error updating status: $e");
+      print("Error updating status: $e");
     }
   }
 
@@ -132,7 +132,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
           .select('pdf_url')
           .match({'id': int.parse(invoiceId)});
       if (response.isEmpty || response[0]['pdf_url'] == null) {
-        print("❌ No PDF found for this invoice!");
+        print("No PDF found for this invoice!");
         return;
       }
       String pdfUrl = response[0]['pdf_url'];
@@ -140,7 +140,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
       // Download PDF
       final pdfResponse = await http.get(Uri.parse(pdfUrl));
       if (pdfResponse.statusCode != 200) {
-        print("❌ Failed to download PDF from Supabase");
+        print("Failed to download PDF from Supabase");
         return;
       }
 
@@ -162,7 +162,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
       }
 
       if (!bookingFieldFound) {
-        print("❌ BOOKING_NO field not found in the form!");
+        print("BOOKING_NO field not found in the form!");
       }
 
       final List<int> updatedBytes = document.saveSync();
@@ -183,7 +183,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
 
       setState(() {});
     } catch (e) {
-      print("❌ Error updating booking number in PDF: $e");
+      print("Error updating booking number in PDF: $e");
     }
   }
 
@@ -255,7 +255,6 @@ class _ManagementDashboardState extends State<ManagementDashboard>
     try {
       await supabase.from('invoices').delete().match({'id': invoiceId});
 
-      // Delete PDF from Supabase Storage (if exist)
       if (pdfUrl != null && pdfUrl.isNotEmpty) {
         Uri uri = Uri.parse(pdfUrl);
         String? path =
@@ -303,7 +302,6 @@ class _ManagementDashboardState extends State<ManagementDashboard>
       );
       setState(() {});
 
-      // Hide banner after a few seconds
       Future.delayed(Duration(seconds: 3), () {
         ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
       });
@@ -541,7 +539,7 @@ class _ManagementDashboardState extends State<ManagementDashboard>
             statusInDB == categoryLower;
         if (!categoryMatches) {
           print(
-              "⚠️ Status mismatch: Invoice status '$statusInDB' does not match category '$category'");
+              "Status mismatch: Invoice status '$statusInDB' does not match category '$category'");
         }
         return categoryMatches;
       }).toList();

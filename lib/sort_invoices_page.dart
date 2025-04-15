@@ -30,7 +30,7 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
   int? selectedMonth;
   String? _selectedAgentName;
   late Future<List<String>> _yearsFuture;
-  String exportLog = ""; // Store export status messages
+  String exportLog = "";
   bool isExporting = false;
   bool isDone = false;
 
@@ -182,16 +182,13 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
   Future<void> exportInvoicesToExcel(
       List<Map<String, dynamic>> invoices) async {
     if (invoices.isEmpty) {
-      print("❌ No data to export.");
       return;
     }
     if (await Permission.storage.request().isDenied) {
-      print("❌ Storage permission denied.");
       return;
     }
     Directory? appDocDir = await getExternalStorageDirectory();
     if (appDocDir == null) {
-      print("❌ Failed to get external storage directory.");
       return;
     }
     String downloadsPath = "${appDocDir.path}/Download";
@@ -224,7 +221,7 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
       workbook.dispose();
       OpenFilex.open(filePath);
     } catch (e) {
-      print("❌ Error saving file: $e");
+      print("Error saving file: $e");
     }
   }
 
@@ -268,8 +265,6 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
 
             return matchesYear && matchesMonth && matchesAgent;
           }).toList();
-
-          print("✅ Found ${filteredInvoices.length} matching invoices.");
           return filteredInvoices;
         });
   }
@@ -640,12 +635,10 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
       String? dateString = invoice['date_invoice'];
 
       if (dateString == null || dateString.isEmpty) {
-        print("⚠️ Skipping invoice due to missing date.");
         continue;
       }
       DateTime? invoiceDate = DateTime.tryParse(dateString);
       if (invoiceDate == null) {
-        print("⚠️ Skipping invoice: Invalid date format -> $dateString");
         continue;
       }
 
@@ -735,7 +728,6 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
     results.add(finalStats);
 
     if (results.isEmpty) {
-      print("🚨 No stats to yield. Sending empty list.");
       yield [];
     } else {
       yield results;

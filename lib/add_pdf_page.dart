@@ -15,7 +15,6 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import 'package:invoice_app/services/auth_service.dart';
 
-// Store the generated PDF file
 File? _pdfFile;
 Timer? _debounce;
 bool _isLoading = false;
@@ -367,7 +366,7 @@ class _AddPDFPageState extends State<AddPDFPage> {
   Future<void> _downloadPDF() async {
     String invoiceNumber = await generateUniqueInvoiceNumber();
     if (_pdfFile == null || !await _pdfFile!.exists()) {
-      print("❌ Error: _pdfFile is null or does not exist!");
+      print("Error: _pdfFile is null or does not exist!");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No PDF available to download!")),
       );
@@ -669,12 +668,12 @@ class _AddPDFPageState extends State<AddPDFPage> {
     });
   }
 
-// ✅ Helper function to handle empty date cases
+// Helper function to handle empty date cases
   DateTime _parseDate(String date) {
     try {
       return DateFormat('dd/MM/yyyy').parse(date);
     } catch (e) {
-      return DateTime.now(); // Default fallback
+      return DateTime.now();
     }
   }
 
@@ -687,7 +686,7 @@ class _AddPDFPageState extends State<AddPDFPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Guest Details Section
+            // Guest Details Section
             _buildSectionHeader("Guest Details"),
             _buildTextField(fullNameController, "Customer Name",
                 "Enter customer's full name", Icons.person),
@@ -695,7 +694,7 @@ class _AddPDFPageState extends State<AddPDFPage> {
             _buildTextField(
                 hotelController, "Hotel Name", "Enter Hotel Name", Icons.hotel),
 
-            // ✅ Room Details Section
+            // Room Details Section
             _buildSectionHeader("Room Details"),
             _buildTextField(
                 roomTypeController, "Room Type", "Enter Room Type", Icons.bed),

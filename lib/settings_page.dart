@@ -21,11 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool isAuthorized = false;
 
   // List of allowed emails
-  final List<String> allowedEmails = [
-    "darkside260700@gmail.com",
-    "norahazlin.isa@gmail.com",
-    "manager@example.com"
-  ];
+  final List<String> allowedEmails = ["manager@example.com"];
 
   @override
   void initState() {
