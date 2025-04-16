@@ -107,7 +107,6 @@ Before you begin, make sure you have the following installed:
       "REMARKS": remarks,
     };
      ```
-
 6. **Run the app**:
    - Once the setup is complete, run the app using:
      ```bash
