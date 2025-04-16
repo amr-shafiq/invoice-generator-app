@@ -11,7 +11,6 @@ A simple yet powerful application for managing and generating invoices. The app 
 4. [Usage](#usage)
 5. [Technology Stack](#technology-stack)
 6. [Contributing](#contributing)
-7. [License](#license)
 
 ---
 
