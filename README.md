@@ -104,8 +104,7 @@ Before you begin, make sure you have the following installed:
       "BOOKING_NO": bookingNo ?? "Pending Verification",
       "DATELINE": formattedDateline,
       "ADD_ON": addOn,
-      "REMARKS": remarks,
-    };
+      "REMARKS": remarks,  };
      ```
 6. **Run the app**:
    - Once the setup is complete, run the app using:
