@@ -78,8 +78,37 @@ Before you begin, make sure you have the following installed:
     SUPABASE_URL=<your-supabase-url>
     SUPABASE_ANON_KEY=<your-supabase-anon-key>
     ```
+5. **Configure Invoice PDF layout**:
+   - Once the setup is complete, attach an invoice file (PDF format) into the `assets` folder. Include editable text fields (This project will not work without them!) of the details that needs to be filled up by users. And then edit the property values of each text field once the invoice file has been inserted. Be sure to edit the values as well in these files; `lib/add_pdf_page.dart` and `lib/add_pdf_page_management.dart`.
+   - Do note that this project is only used for invoice generation among agents and management used in a travel agency. If this project is used by anything else, then these file may need to be changed entirely (To fit the use case requirement).
+   - Change the text field values whenever necessary (If the invoice layout does not match with the default text value as shown in here). It is around the lines like this:
+     ```plaintext
+     final Map<String, dynamic> fields = {
+      "CUSTOMER_NAME": customerName,
+      "INVOICE_NO": invoiceNo,
+      "DATE": formattedInvoiceDate,
+      "BANK_TRANSFER": formattedBankTransfer,
+      "HOTEL_NAME": hotel,
+      "ROOM_TYPE": roomType,
+      "CHECK_IN": formattedCheckInDate,
+      "CHECK_OUT": formattedCheckOutDate,
+      "ROOM_RATE": roomRate,
+      "BREAKFAST_OR_NO": breakfast,
+      "QUANTITY": quantityRoom.toString(),
+      "BALANCE_DUE": balanceDue.toString(),
+      "AMOUNT": amount.toString(),
+      "AGENT_NAME": agentName,
+      "TOTAL": totalAmount.toString(),
+      "PAYMENT": payment.toString(),
+      "BALANCE": balance.toString(),
+      "BOOKING_NO": bookingNo ?? "Pending Verification",
+      "DATELINE": formattedDateline,
+      "ADD_ON": addOn,
+      "REMARKS": remarks,
+    };
+     ```
 
-5. **Run the app**:
+6. **Run the app**:
    - Once the setup is complete, run the app using:
      ```bash
      flutter run
