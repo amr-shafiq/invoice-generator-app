@@ -108,6 +108,7 @@ flutter:
     - assets/travel_night.jpg
     - assets/travel_day.jpg
     - assets/excel_icon.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
