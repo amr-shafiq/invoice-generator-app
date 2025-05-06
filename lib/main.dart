@@ -16,11 +16,15 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(); // Will look for .env inside assets
+  } catch (e) {}
   await Firebase.initializeApp();
   FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
-  // final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  //   FlutterLocalNotificationsPlugin();
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
 
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
