@@ -119,7 +119,7 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
   void showDownloadNotification(String filePath) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'invoice_download_channel',
+      'invoice_updates',
       'Invoice Downloads',
       channelDescription: 'Notification when an invoice is downloaded',
       importance: Importance.high,
@@ -133,7 +133,7 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      0,
+      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique ID
       'Download Complete',
       'Invoice saved at $filePath',
       platformChannelSpecifics,
@@ -184,26 +184,38 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
     if (invoices.isEmpty) {
       return;
     }
+
+    // Request storage permission
     if (await Permission.storage.request().isDenied) {
       return;
     }
-    Directory? appDocDir = await getExternalStorageDirectory();
-    if (appDocDir == null) {
-      return;
-    }
-    String downloadsPath = "${appDocDir.path}/Download";
-    await Directory(downloadsPath).create(recursive: true);
-    String filePath =
-        "$downloadsPath/Invoices_${DateTime.now().toIso8601String()}.xlsx";
-    File file = File(filePath);
 
     try {
+      // Get the external storage directory
+      Directory? externalStorageDir = await getExternalStorageDirectory();
+      if (externalStorageDir == null) {
+        throw Exception("Could not access external storage.");
+      }
+
+      // Get the Downloads directory by appending "Download" to the path
+      String downloadsPath = "${externalStorageDir.path}/Download";
+      await Directory(downloadsPath).create(recursive: true);
+
+      // Define the file path for the Excel file
+      String filePath =
+          "$downloadsPath/Invoices_${DateTime.now().toIso8601String()}.xlsx";
+
+      // Create the Excel workbook
       final xls.Workbook workbook = xls.Workbook();
       final xls.Worksheet sheet = workbook.worksheets[0];
+
+      // Add headers to the Excel sheet
       List<String> headers = invoices.first.keys.toList();
       for (int i = 0; i < headers.length; i++) {
         sheet.getRangeByIndex(1, i + 1).setText(headers[i]);
       }
+
+      // Add invoice data to the Excel sheet
       for (int i = 0; i < invoices.length; i++) {
         Map<String, dynamic> invoice = invoices[i];
         for (int j = 0; j < headers.length; j++) {
@@ -216,14 +228,69 @@ class _SortInvoicesPageState extends State<SortInvoicesPage> {
         }
       }
 
+      // Save the workbook as a byte array and write it to the file
       final List<int> bytes = workbook.saveAsStream();
+      File file = File(filePath);
       await file.writeAsBytes(bytes);
+
+      // Dispose of the workbook to free up memory
       workbook.dispose();
+
+      // Open the saved file
       OpenFilex.open(filePath);
+
+      // Show a download notification (e.g., Toast or Snackbar)
+      showDownloadNotification(filePath);
     } catch (e) {
       print("Error saving file: $e");
     }
   }
+
+  // Future<void> exportInvoicesToExcel(
+  //     List<Map<String, dynamic>> invoices) async {
+  //   if (invoices.isEmpty) {
+  //     return;
+  //   }
+  //   if (await Permission.storage.request().isDenied) {
+  //     return;
+  //   }
+  //   Directory? appDocDir = await getExternalStorageDirectory();
+  //   if (appDocDir == null) {
+  //     return;
+  //   }
+  //   String downloadsPath = "${appDocDir.path}/Download";
+  //   await Directory(downloadsPath).create(recursive: true);
+  //   String filePath =
+  //       "$downloadsPath/Invoices_${DateTime.now().toIso8601String()}.xlsx";
+  //   File file = File(filePath);
+
+  //   try {
+  //     final xls.Workbook workbook = xls.Workbook();
+  //     final xls.Worksheet sheet = workbook.worksheets[0];
+  //     List<String> headers = invoices.first.keys.toList();
+  //     for (int i = 0; i < headers.length; i++) {
+  //       sheet.getRangeByIndex(1, i + 1).setText(headers[i]);
+  //     }
+  //     for (int i = 0; i < invoices.length; i++) {
+  //       Map<String, dynamic> invoice = invoices[i];
+  //       for (int j = 0; j < headers.length; j++) {
+  //         var value = invoice[headers[j]];
+  //         if (value is num) {
+  //           sheet.getRangeByIndex(i + 2, j + 1).setNumber(value.toDouble());
+  //         } else {
+  //           sheet.getRangeByIndex(i + 2, j + 1).setText(value.toString());
+  //         }
+  //       }
+  //     }
+
+  //     final List<int> bytes = workbook.saveAsStream();
+  //     await file.writeAsBytes(bytes);
+  //     workbook.dispose();
+  //     OpenFilex.open(filePath);
+  //   } catch (e) {
+  //     print("Error saving file: $e");
+  //   }
+  // }
 
   void initiateExport() async {
     List<Map<String, dynamic>> invoices = [];

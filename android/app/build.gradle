@@ -41,7 +41,7 @@ dependencies {
 }
 
 android {
-    namespace = "com.ccm.invoice_app"
+    namespace = "com.example.app"
     compileSdkVersion 35
     ndkVersion = flutter.ndkVersion
 
@@ -57,7 +57,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.ccm.invoice_app"
+        applicationId = "com.example.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         
@@ -76,10 +76,7 @@ android {
             keyPassword "android"
         }
         release {
-            storeFile file("C:/CCM app/invoice_app/my-release-key.jks") // Change to your keystore path
-            storePassword '$DeezNuts267' // Replace with your actual password
-            keyAlias "my-key-alias" // Replace with your key alias
-            keyPassword '$DeezNuts267' // Replace with your actual key password
+            // Replace with your own keystore and password
         }
     }
 

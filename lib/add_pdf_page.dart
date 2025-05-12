@@ -77,6 +77,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
       DatelineController,
       AddOnController,
       RemarkController,
+      ICNoController,
+      TeleNoController,
     ];
 
     for (var controller in controllers) {
@@ -112,6 +114,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
       DatelineController,
       AddOnController,
       RemarkController,
+      ICNoController,
+      TeleNoController,
     ];
 
     for (var controller in controllers) {
@@ -144,6 +148,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
   final TextEditingController DatelineController = TextEditingController();
   final TextEditingController AddOnController = TextEditingController();
   final TextEditingController RemarkController = TextEditingController();
+  final TextEditingController ICNoController = TextEditingController();
+  final TextEditingController TeleNoController = TextEditingController();
 
   File? _pdfFile; // Store the latest generated PDF
 
@@ -226,6 +232,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
     required DateTime dateline,
     required String addOn,
     required String remarks,
+    required String ICNo,
+    required String TeleNo,
   }) async {
     final ByteData data =
         await rootBundle.load("assets/INVB3758_word_fillable_agent.pdf");
@@ -388,13 +396,13 @@ class _AddPDFPageState extends State<AddPDFPage> {
     if (Platform.isAndroid) {
       outputPath = await FilePicker.platform.saveFile(
         dialogTitle: "Save Invoice PDF",
-        fileName: "Invoice_${invoiceNumber}.pdf",
+        fileName: "AMK${invoiceNumber}.pdf",
         type: FileType.custom,
         allowedExtensions: ['pdf'],
       );
     } else if (Platform.isIOS) {
       final Directory directory = await getApplicationDocumentsDirectory();
-      outputPath = '${directory.path}/Invoice_${invoiceNumber}.pdf';
+      outputPath = '${directory.path}/AMK${invoiceNumber}.pdf';
     }
 
     if (outputPath == null) {
@@ -464,6 +472,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
       checkOutController,
       breakfastController,
       quantityRoomController,
+      ICNoController,
+      TeleNoController,
     ];
 
     for (var controller in requiredFields) {
@@ -528,6 +538,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
       dateline: parseDate(formatDate(DatelineController.text)),
       addOn: AddOnController.text,
       remarks: RemarkController.text,
+      ICNo: ICNoController.text,
+      TeleNo: TeleNoController.text,
     );
 
     if (!_validateFields()) {
@@ -573,6 +585,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
         'add_on': AddOnController.text,
         'remarks': RemarkController.text,
         'role': userRole,
+        'ic_no ': ICNoController.text,
+        'telephone_no': TeleNoController.text,
       });
 
       ScaffoldMessenger.of(context).showMaterialBanner(
@@ -660,6 +674,8 @@ class _AddPDFPageState extends State<AddPDFPage> {
       dateline: _parseDate(DatelineController.text),
       addOn: AddOnController.text,
       remarks: RemarkController.text,
+      ICNo: ICNoController.text,
+      TeleNo: TeleNoController.text,
     );
 
     setState(() {
@@ -687,12 +703,42 @@ class _AddPDFPageState extends State<AddPDFPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Guest Details Section
-            _buildSectionHeader("Guest Details"),
+            _buildSectionHeader("Customer Details"),
             _buildTextField(fullNameController, "Customer Name",
                 "Enter customer's full name", Icons.person),
             // _buildDatePicker(context, dateInvoiceController, "Invoice Date"),
             _buildTextField(
                 hotelController, "Hotel Name", "Enter Hotel Name", Icons.hotel),
+            _buildTextField(
+              ICNoController,
+              "IC Number of customer",
+              "Enter customer's IC number",
+              Icons.person_pin_sharp,
+              isNumeric: true,
+              validator: (value) {
+                if (value == null || value.isEmpty)
+                  return 'IC number is required.';
+                final icPattern = RegExp(r'^\d{6}-?\d{2}-?\d{4}$');
+                return icPattern.hasMatch(value)
+                    ? null
+                    : 'Invalid Malaysian IC format (e.g. 010203-10-1234).';
+              },
+            ),
+            _buildTextField(
+              TeleNoController,
+              "Customer's Telephone Number",
+              "Enter customer's phone number",
+              Icons.phone,
+              isNumeric: true,
+              validator: (value) {
+                if (value == null || value.isEmpty)
+                  return 'Phone number is required.';
+                final phonePattern = RegExp(r'^01[0-46-9]-?\d{7,8}$');
+                return phonePattern.hasMatch(value)
+                    ? null
+                    : 'Invalid Malaysian phone number.';
+              },
+            ),
 
             // Room Details Section
             _buildSectionHeader("Room Details"),
@@ -845,14 +891,20 @@ class _AddPDFPageState extends State<AddPDFPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label,
-      String hint, IconData icon,
-      {bool isNumeric = false}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    String hint,
+    IconData icon, {
+    bool isNumeric = false,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
         controller: controller,
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        validator: validator,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,

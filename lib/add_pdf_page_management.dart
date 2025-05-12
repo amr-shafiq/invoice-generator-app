@@ -139,6 +139,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       _RemarkController,
       statusController,
       surchargeController,
+      ICNoController,
+      TeleNoController,
     ];
 
     for (var controller in controllers) {
@@ -168,10 +170,14 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     bookingNoController.clear();
     statusController.clear();
     surchargeController.clear();
+    ICNoController.clear();
+    TeleNoController.clear();
   }
 
   void _populateFieldsWithInvoiceDetails(Map<String, dynamic> invoiceDetails) {
     _fullNameController.text = invoiceDetails['customer_name'] ?? "";
+    ICNoController.text = invoiceDetails['ic_no'] ?? "";
+    TeleNoController.text = invoiceDetails['telephone_no'] ?? "";
     _hotelController.text = invoiceDetails['hotel'] ?? "";
     _roomTypeController.text = invoiceDetails['room_type'] ?? "";
     if (!_hasUserEditedBreakfast && _breakfastController.text.isEmpty) {
@@ -276,12 +282,16 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       _RemarkController,
       statusController,
       surchargeController,
+      ICNoController,
+      TeleNoController,
     ];
 
     roomRateController.removeListener(_updatePDFPreview);
     _quantityRoomController.removeListener(_updatePDFPreview);
     surchargeController.removeListener(_updatePDFPreview);
     paymentController.removeListener(_updatePDFPreview);
+    ICNoController.removeListener(_updatePDFPreview);
+    TeleNoController.removeListener(_updatePDFPreview);
 
     for (var controller in controllers) {
       controller.dispose();
@@ -317,6 +327,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
   final TextEditingController agentEmailController = TextEditingController();
   final TextEditingController RoleController = TextEditingController();
   final TextEditingController surchargeController = TextEditingController();
+  final TextEditingController ICNoController = TextEditingController();
+  final TextEditingController TeleNoController = TextEditingController();
 
   File? _pdfFile;
 
@@ -482,6 +494,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     if (!_hasUserEditedAgentEmail) {
       agentEmailController.text = invoiceDetails['agent_email'] ?? "";
     }
+    ICNoController.text = invoiceDetails['ic_no'] ?? "";
+    TeleNoController.text = invoiceDetails['telephone_no'] ?? "";
 
     setState(() {
       _isInvoiceNumberFetched = true;
@@ -506,6 +520,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     agentEmailController.text = invoiceData['agent_email'] ?? '';
     roomRateController.text = invoiceData['room_rate'] ?? '';
     surchargeController.text = invoiceData['surcharge'] ?? '';
+    ICNoController.text = invoiceData['ic_no'] ?? '';
+    TeleNoController.text = invoiceData['telephone_no'] ?? '';
     // RoleController = invoiceData['role'] ?? '';
 
     // Handle date parsing
@@ -559,6 +575,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       required String remarks,
       required String status,
       required String agentEmail,
+      required String ICNo,
+      required String TeleNo,
       required String role}) async {
     final ByteData data =
         await rootBundle.load("assets/INVB3758_word_fillable.pdf");
@@ -645,10 +663,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
         .maybeSingle();
 
     if (managementInvoiceResponse != null) {
-      print("⚠️ Found Management Invoice: $managementInvoiceResponse");
       return managementInvoiceResponse;
     }
-    print("❌ No invoice found for invoice number: $invoiceNumber");
     return null;
   }
 
@@ -865,6 +881,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       DatelineController,
       totalAmountController,
       paymentController,
+      ICNoController,
+      TeleNoController,
     ];
 
     // if (userRole == 'management') {
@@ -985,6 +1003,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
         'status': "Pending",
         'agent_email': agentEmail,
         'role': userRole == "management" ? "management" : "Unknown",
+        'ic_no': "0",
+        'telephone_no': "0",
       };
     }
 
@@ -1059,6 +1079,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             'status': "Pending",
             'agent_email': "N/A",
             'role': userRole == "management" ? "management" : "Unknown",
+            'ic_no': "0",
+            'telephone_no': "0",
           };
     DateTime dateInvoice = _dateInvoiceController.text.isNotEmpty
         ? parseDate(_formatDateForDisplay(_dateInvoiceController.text))
@@ -1159,6 +1181,12 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
           : RoleController.text.isNotEmpty
               ? RoleController.text
               : oldInvoiceDetails['role'] ?? "Unknown",
+      ICNo: ICNoController.text.isNotEmpty
+          ? ICNoController.text
+          : oldInvoiceDetails['ic_no'] ?? "N/A",
+      TeleNo: TeleNoController.text.isNotEmpty
+          ? TeleNoController.text
+          : oldInvoiceDetails['telephone_no'] ?? "N/A",
     );
 
     if (!_validateFields()) {
@@ -1278,6 +1306,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             ? "management"
             : oldInvoiceDetails['role'] ?? "Unknown",
         'uploaded_by': agentName,
+        'telephone_no': TeleNoController.text,
+        'ic_no': ICNoController.text,
       });
 
       ScaffoldMessenger.of(context).showMaterialBanner(
@@ -1476,6 +1506,8 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
       status: statusController.text,
       agentEmail: agentEmailController.text,
       role: RoleController.text,
+      ICNo: ICNoController.text,
+      TeleNo: TeleNoController.text,
     );
     setState(() {
       _pdfFile = file;
@@ -1509,6 +1541,9 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 ], validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Invoice number is required.";
+              }
               if (!RegExp(r'^[a-zA-Z0-9]{5}$').hasMatch(value.trim())) {
                 return "Please enter exactly 5 alphanumeric characters (0-9, A-Z).";
               }
@@ -1523,12 +1558,42 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
             }),
 
             // Guest Details Section
-            _buildSectionHeader("Guest Details"),
+            _buildSectionHeader("Customer Details"),
             _buildTextField(_fullNameController, "Customer Name",
                 "Enter customer's full name", Icons.person),
             // _buildDatePicker(context, _dateInvoiceController, "Invoice Date"),
             _buildTextField(_hotelController, "Hotel Name", "Enter Hotel Name",
                 Icons.hotel),
+            _buildTextField(
+              ICNoController,
+              "IC Number of customer",
+              "Enter customer's IC number",
+              Icons.person_pin_sharp,
+              isNumeric: true,
+              validator: (value) {
+                if (value == null || value.isEmpty)
+                  return 'IC number is required.';
+                final icPattern = RegExp(r'^\d{6}-?\d{2}-?\d{4}$');
+                return icPattern.hasMatch(value)
+                    ? null
+                    : 'Invalid Malaysian IC format (e.g. 010203-10-1234).';
+              },
+            ),
+            _buildTextField(
+              TeleNoController,
+              "Customer's Telephone Number",
+              "Enter customer's phone number",
+              Icons.phone,
+              isNumeric: true,
+              validator: (value) {
+                if (value == null || value.isEmpty)
+                  return 'Phone number is required.';
+                final phonePattern = RegExp(r'^01[0-46-9]-?\d{7,8}$');
+                return phonePattern.hasMatch(value)
+                    ? null
+                    : 'Invalid Malaysian phone number.';
+              },
+            ),
 
             // Room Details Section
             _buildSectionHeader("Room Details"),
@@ -1684,7 +1749,7 @@ class _AddPDFPageState extends State<AddPDFPageManagement> {
     void Function(String)? onSubmitted,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
-    String? Function(String)? validator,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
